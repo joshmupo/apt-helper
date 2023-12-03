@@ -73,7 +73,7 @@ def updateSpreadsheetData(creds, spreadsheet_id):
         sys.exit(1)
 
     # Execute batches in parallel
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
         futures = [executor.submit(processSheetData, creds, spreadsheet_id, sheet) for sheet in sheets_data]
 
         # Process result
@@ -107,7 +107,7 @@ def processSheetData(creds, spreadsheet_id, sheet):
                 logging.debug("updated c13 to e13")
                 sheets_data[i]['range'] = sheets_data[i]['range'].replace("C13", "E13")
             elif "I5" in rangeComparator:
-                sheets_data[i]['values'][0][0] = CONVERTED_DATE.strftime("%d/%m/%y")
+                sheets_data[i]['values'][0][0] = CONVERTED_DATE.strftime("%d/%m") + "/" + str(CONVERTED_DATE.year)
             elif "C10" in rangeComparator:
                 sheets_data[i]['values'][0][0] = thai_abbreviated_month_names[CONVERTED_DATE.month - 1] + \
                                                  CONVERTED_DATE.strftime("%y")
@@ -125,8 +125,8 @@ def processSheetData(creds, spreadsheet_id, sheet):
         update_resp = doPostRequest(creds, batch_update_url, batch_update_payload)
         logging.debug(update_resp)
 
-    except:
-        logging.error(f"error occurred trying to get/update sheet with title: {sheet_title}")
+    except Exception as e:
+        logging.error(f"error occurred trying to get/update sheet with title: {sheet_title} with error: {e}")
 
     return f'Finished processing sheet: {sheet_title}'
 
